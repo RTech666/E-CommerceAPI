@@ -13,7 +13,7 @@ public class MySqlOrderLineItemDao extends MySqlDaoBase implements OrderLineItem
 
     @Override
     public void create(OrderLineItem orderLineItem) {
-        String sql = "INSERT INTO order_line_items (order_id, product_id, quantity, unit_price, discount_percent, total) " + "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO order_line_items (order_line_item_id, order_id, product_id, sales_price, quantity, discount) " + "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = getConnection()) {
             PreparedStatement ps = connection.prepareStatement(sql);
