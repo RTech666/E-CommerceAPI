@@ -36,10 +36,15 @@ public class ShoppingCartController {
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
-    
+            
+            System.out.println("User ID: " + userId);
+            
             ShoppingCart cart = shoppingCartDao.getCartByUserId(userId);
             if (cart == null) {
                 cart = new ShoppingCart();
+                System.out.println("Cart is empty and newly created.");
+            } else {
+                System.out.println("Cart items: " + cart.getItems());
             }
     
             for (ShoppingCartItem item : cart.getItems().values()) {
@@ -58,32 +63,37 @@ public class ShoppingCartController {
     }
 
     @PostMapping("/products/{productId}")
-    public ResponseEntity<Void> addProductToCart(Principal principal, @PathVariable int productId) {
+    public ResponseEntity<Void> addProductToCart(Principal principal, @PathVariable int productId, @RequestBody(required = false) ShoppingCartItem item) {
         try {
+            if (item == null) {
+                System.out.println("Request body is empty.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body cannot be empty");
+            }
+            
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
-
+    
             Product product = productDao.getById(productId);
             if (product == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
             }
-
-            ShoppingCartItem item = shoppingCartDao.getItemByUserIdAndProductId(userId, productId);
-            if (item == null) {
-                item = new ShoppingCartItem();
-                item.setProductId(productId);
-                item.setUserId(userId);
+    
+            item.setUserId(userId);
+            item.setProduct(product);
+    
+            ShoppingCartItem existingItem = shoppingCartDao.getItemByUserIdAndProductId(userId, productId);
+            if (existingItem == null) {
                 item.setQuantity(1);
-                item.setProduct(product);
                 shoppingCartDao.addItem(item);
             } else {
-                item.setQuantity(item.getQuantity() + 1);
-                shoppingCartDao.updateItem(item);
+                existingItem.setQuantity(existingItem.getQuantity() + 1);
+                shoppingCartDao.updateItem(existingItem);
             }
-
+    
             return new ResponseEntity<>(HttpStatus.CREATED);
         } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.", e);
         }
     }
