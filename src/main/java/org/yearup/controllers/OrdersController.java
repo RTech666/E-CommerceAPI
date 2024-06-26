@@ -3,6 +3,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.yearup.data.OrderDao;
@@ -18,13 +19,16 @@ import org.yearup.models.ShoppingCartItem;
 import org.yearup.models.User;
 import java.security.Principal;
 import java.util.Date;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/orders")
 @CrossOrigin
 @PreAuthorize("isAuthenticated()")
 public class OrdersController {
+    private static final Logger logger = LoggerFactory.getLogger(OrdersController.class);
+    
     private final OrderDao orderDao;
     private final OrderLineItemDao orderLineItemDao;
     private final ShoppingCartDao shoppingCartDao;
@@ -41,6 +45,7 @@ public class OrdersController {
     }
 
     @PostMapping("")
+    @Transactional
     public ResponseEntity<Order> checkout(Principal principal) {
         try {
             String userName = principal.getName();
@@ -66,6 +71,13 @@ public class OrdersController {
 
             Order createdOrder = orderDao.create(order);
 
+            if (createdOrder == null || createdOrder.getOrderId() == 0) {
+                logger.error("Order creation failed, createdOrder is null or orderId is 0");
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Order creation failed");
+            }
+
+            logger.debug("Order created with ID: {}", createdOrder.getOrderId());
+
             for (ShoppingCartItem item : cart.getItems().values()) {
                 OrderLineItem orderLineItem = new OrderLineItem();
                 orderLineItem.setOrderId(createdOrder.getOrderId());
@@ -75,6 +87,7 @@ public class OrdersController {
                 orderLineItem.setDiscountPercent(item.getDiscountPercent());
                 orderLineItem.setTotal(item.getLineTotal());
 
+                logger.debug("Creating order line item: {}", orderLineItem);
                 orderLineItemDao.create(orderLineItem);
             }
 
@@ -82,6 +95,7 @@ public class OrdersController {
 
             return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
         } catch (Exception e) {
+            logger.error("Unable to process order", e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to process order", e);
         }
     }

@@ -25,8 +25,7 @@ public class MySqlOrderLineItemDao extends MySqlDaoBase implements OrderLineItem
             ps.setBigDecimal(6, orderLineItem.getTotal());
 
             ps.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
