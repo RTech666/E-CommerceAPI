@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public class ShoppingCartItem {
     private int userId;
     private int productId;
-    private int quantity = 1;
+    private Integer quantity;
     private BigDecimal discountPercent = BigDecimal.ZERO;
     private BigDecimal lineTotal;
 
@@ -27,11 +27,11 @@ public class ShoppingCartItem {
         this.product = product;
     }
 
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 

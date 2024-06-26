@@ -13,6 +13,8 @@ import org.yearup.models.ShoppingCart;
 import org.yearup.models.ShoppingCartItem;
 import org.yearup.models.User;
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/cart")
@@ -63,13 +65,15 @@ public class ShoppingCartController {
     }
 
     @PostMapping("/products/{productId}")
-    public ResponseEntity<Void> addProductToCart(Principal principal, @PathVariable int productId, @RequestBody(required = false) ShoppingCartItem item) {
+    public ResponseEntity<Map<String, Object>> addProductToCart(Principal principal, @PathVariable int productId, @RequestBody(required = false) ShoppingCartItem item) {
+        if (item == null || item.getProduct() == null) {
+            System.out.println("Received empty request body or product is null.");
+            System.out.println("Item: " + item);
+            System.out.println("Product: " + (item != null ? item.getProduct() : "null"));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body or product cannot be empty");
+        }
+    
         try {
-            if (item == null) {
-                System.out.println("Request body is empty.");
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body cannot be empty");
-            }
-            
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
@@ -84,16 +88,23 @@ public class ShoppingCartController {
     
             ShoppingCartItem existingItem = shoppingCartDao.getItemByUserIdAndProductId(userId, productId);
             if (existingItem == null) {
-                item.setQuantity(1);
+                item.setQuantity(item.getQuantity() != null ? item.getQuantity() : 1);
                 shoppingCartDao.addItem(item);
             } else {
-                existingItem.setQuantity(existingItem.getQuantity() + 1);
+                existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
                 shoppingCartDao.updateItem(existingItem);
             }
     
-            return new ResponseEntity<>(HttpStatus.CREATED);
+            ShoppingCart cart = shoppingCartDao.getCartByUserId(userId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Product added to cart successfully");
+            response.put("item", cart.getItems());
+            response.put("total", cart.getTotal());
+    
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
+            e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.", e);
         }
     }
