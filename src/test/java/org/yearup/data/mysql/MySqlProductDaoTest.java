@@ -14,11 +14,11 @@ class MySqlProductDaoTest extends BaseDaoTestClass
 {
     private MySqlProductDao dao;
 
-    @BeforeEach
-    public void setup()
-    {
-        dao = new MySqlProductDao(dataSource);
-    }
+    // @BeforeEach
+    // public void setup()
+    // {
+    //     dao = new MySqlProductDao(dataSource);
+    // }
 
     @Test
     public void getById_shouldReturn_theCorrectProduct()

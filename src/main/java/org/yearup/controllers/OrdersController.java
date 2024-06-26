@@ -51,14 +51,14 @@ public class OrdersController {
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
-
+    
             ShoppingCart cart = shoppingCartDao.getByUserId(userId);
             if (cart == null || cart.getItems().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shopping cart is empty");
             }
-
+    
             Profile profile = profileDao.getByUserId(userId);
-
+    
             Order order = new Order();
             order.setUserId(userId);
             order.setTotal(cart.getTotal().doubleValue());
@@ -68,16 +68,22 @@ public class OrdersController {
             order.setState(profile.getState());
             order.setZip(profile.getZip());
             order.setShipping(order.getShipping());
-
+    
             Order createdOrder = orderDao.create(order);
-
+    
             if (createdOrder == null || createdOrder.getOrderId() == 0) {
                 logger.error("Order creation failed, createdOrder is null or orderId is 0");
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Order creation failed");
             }
-
+    
             logger.debug("Order created with ID: {}", createdOrder.getOrderId());
-
+    
+            Order verifiedOrder = orderDao.getOrderById(createdOrder.getOrderId());
+            if (verifiedOrder == null) {
+                logger.error("Order verification failed, order ID {} does not exist", createdOrder.getOrderId());
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Order verification failed");
+            }
+    
             for (ShoppingCartItem item : cart.getItems().values()) {
                 OrderLineItem orderLineItem = new OrderLineItem();
                 orderLineItem.setOrderId(createdOrder.getOrderId());
@@ -86,13 +92,13 @@ public class OrdersController {
                 orderLineItem.setUnitPrice(item.getProduct().getPrice());
                 orderLineItem.setDiscountPercent(item.getDiscountPercent());
                 orderLineItem.setTotal(item.getLineTotal());
-
+    
                 logger.debug("Creating order line item: {}", orderLineItem);
                 orderLineItemDao.create(orderLineItem);
             }
-
+    
             shoppingCartDao.clearCart(userId);
-
+    
             return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
         } catch (Exception e) {
             logger.error("Unable to process order", e);
