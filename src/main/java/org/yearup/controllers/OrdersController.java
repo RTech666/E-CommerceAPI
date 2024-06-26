@@ -42,18 +42,16 @@ public class OrdersController {
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
 
-            ShoppingCart cart = shoppingCartDao.getCartByUserId(userId);
+            ShoppingCart cart = shoppingCartDao.getByUserId(userId);
             if (cart == null || cart.getItems().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shopping cart is empty");
             }
 
-            // Create new order
             Order order = new Order();
             order.setUserId(userId);
             order.setTotal(cart.getTotal());
             orderDao.create(order);
 
-            // Create order line items
             for (ShoppingCartItem item : cart.getItems().values()) {
                 OrderLineItem orderLineItem = new OrderLineItem();
                 orderLineItem.setOrderId(order.getOrderId());
@@ -66,7 +64,6 @@ public class OrdersController {
                 orderLineItemDao.create(orderLineItem);
             }
 
-            // Clear the shopping cart
             shoppingCartDao.clearCart(userId);
 
             return new ResponseEntity<>(HttpStatus.CREATED);

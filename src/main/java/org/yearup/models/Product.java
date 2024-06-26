@@ -15,16 +15,16 @@ public class Product {
     public Product() {
     }
 
-    public Product(int productId, String name, BigDecimal price, int categoryId, String description, String color, String imageUrl, int stock, boolean isFeatured) {
+    public Product(int productId, String name, BigDecimal price, int categoryId, String description, String color, int stock, boolean isFeatured, String imageUrl) {
         this.productId = productId;
         this.name = name;
         this.price = price;
         this.categoryId = categoryId;
         this.description = description;
         this.color = color;
-        this.stock = stock;
         this.isFeatured = isFeatured;
-        this.imageUrl = imageUrl;
+        this.imageUrl= imageUrl;
+        this.stock = stock;
     }
 
     public int getProductId() {

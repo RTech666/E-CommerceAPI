@@ -41,7 +41,7 @@ public class ShoppingCartController {
             
             System.out.println("User ID: " + userId);
             
-            ShoppingCart cart = shoppingCartDao.getCartByUserId(userId);
+            ShoppingCart cart = shoppingCartDao.getByUserId(userId);
             if (cart == null) {
                 cart = new ShoppingCart();
                 System.out.println("Cart is empty and newly created.");
@@ -64,69 +64,42 @@ public class ShoppingCartController {
         }
     }
 
-    @PostMapping("/products/{productId}")
-    public ResponseEntity<Map<String, Object>> addProductToCart(Principal principal, @PathVariable int productId, @RequestBody(required = false) ShoppingCartItem item) {
-        if (item == null || item.getProduct() == null) {
-            System.out.println("Received empty request body or product is null.");
-            System.out.println("Item: " + item);
-            System.out.println("Product: " + (item != null ? item.getProduct() : "null"));
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body or product cannot be empty");
+    @PostMapping("/products/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ShoppingCartItem addProductToCart(@PathVariable int id, Principal principal){
+
+        int userId = getUserId(principal);
+
+        ShoppingCart shoppingCart = shoppingCartDao.getByUserId(userId);
+
+        if (!shoppingCart.contains(id)) {
+            shoppingCartDao.addProduct(userId,id,1);
+            shoppingCart = shoppingCartDao.getByUserId(userId);
+
+        } else {
+            shoppingCartDao.updateProduct(userId, id, shoppingCart.get(id).getQuantity() + 1);
+            shoppingCart = shoppingCartDao.getByUserId(userId);
         }
-    
-        try {
-            String userName = principal.getName();
-            User user = userDao.getByUserName(userName);
-            int userId = user.getId();
-    
-            Product product = productDao.getById(productId);
-            if (product == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
-            }
-    
-            item.setUserId(userId);
-            item.setProduct(product);
-    
-            ShoppingCartItem existingItem = shoppingCartDao.getItemByUserIdAndProductId(userId, productId);
-            if (existingItem == null) {
-                item.setQuantity(item.getQuantity() != null ? item.getQuantity() : 1);
-                shoppingCartDao.addItem(item);
-            } else {
-                existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
-                shoppingCartDao.updateItem(existingItem);
-            }
-    
-            ShoppingCart cart = shoppingCartDao.getCartByUserId(userId);
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Product added to cart successfully");
-            response.put("item", cart.getItems());
-            response.put("total", cart.getTotal());
-    
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.", e);
-        }
+        return shoppingCart.get(id);
     }
 
-    @PutMapping("/products/{productId}")
-    public ResponseEntity<Void> updateProductInCart(Principal principal, @PathVariable int productId, @RequestBody ShoppingCartItem item)
-    {
-        try
-        {
-            String userName = principal.getName();
-            User user = userDao.getByUserName(userName);
-            int userId = user.getId();
+    private int getUserId(Principal principal) {
+        String userName = principal.getName();
+        User user = userDao.getByUserName(userName);
+        return user.getId();
+    }
 
-            item.setUserId(userId);
-            item.setProductId(productId);
+    @PutMapping("/products/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public void updateCartProduct(@PathVariable int id, Principal principal, @RequestBody ShoppingCartItem item){
+        int userId = getUserId(principal);
 
-            shoppingCartDao.updateItem(item);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        catch(Exception e)
-        {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.", e);
+        ShoppingCart shoppingCart = shoppingCartDao.getByUserId(userId);
+
+        if (shoppingCart.contains(id)){
+            shoppingCartDao.updateProduct(userId, id, item.getQuantity());
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Item doesn't exist to update.");
         }
     }
 

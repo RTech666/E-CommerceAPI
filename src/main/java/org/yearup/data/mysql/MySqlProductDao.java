@@ -28,9 +28,9 @@ public class MySqlProductDao implements ProductDao {
         rs.getInt("category_id"),
         rs.getString("description"),
         rs.getString("color"),
-        rs.getString("image_url"),
         rs.getInt("stock"),
-        rs.getBoolean("featured")
+        rs.getBoolean("featured"),
+        rs.getString("image_url")
     );
 
     private ResultSetExtractor<Product> productExtractor = rs -> rs.next() ? productRowMapper.mapRow(rs, 1) : null;
