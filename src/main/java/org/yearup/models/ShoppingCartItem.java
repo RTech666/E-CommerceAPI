@@ -9,56 +9,46 @@ public class ShoppingCartItem {
     private BigDecimal discountPercent = BigDecimal.ZERO;
     private BigDecimal lineTotal;
 
-    private Product product = null;
+    private Product product;
 
     public ShoppingCartItem() {}
 
-    public ShoppingCartItem(int userId, int productId, int quantity, BigDecimal discountPercent, BigDecimal lineTotal) {
+    public ShoppingCartItem(int userId, int productId, int quantity) {
         this.userId = userId;
         this.productId = productId;
         this.quantity = quantity;
-        this.discountPercent = discountPercent;
-        this.lineTotal = lineTotal;
     }
 
-    public Product getProduct()
-    {
+    public Product getProduct() {
         return product;
     }
 
-    public void setProduct(Product product)
-    {
+    public void setProduct(Product product) {
         this.product = product;
     }
 
-    public int getQuantity()
-    {
+    public int getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity)
-    {
+    public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
 
-    public BigDecimal getDiscountPercent()
-    {
+    public BigDecimal getDiscountPercent() {
         return discountPercent;
     }
 
-    public void setDiscountPercent(BigDecimal discountPercent)
-    {
+    public void setDiscountPercent(BigDecimal discountPercent) {
         this.discountPercent = discountPercent;
     }
 
     @JsonIgnore
-    public int getProductId()
-    {
-        return this.product.getProductId();
+    public int getProductId() {
+        return product != null ? product.getProductId() : productId;
     }
 
-    public BigDecimal getLineTotal()
-    {
+    public BigDecimal getLineTotal() {
         BigDecimal basePrice = product.getPrice();
         BigDecimal quantity = new BigDecimal(this.quantity);
 

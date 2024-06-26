@@ -22,9 +22,7 @@ public class MySqlShoppingCartDao implements ShoppingCartDao
     private RowMapper<ShoppingCartItem> itemRowMapper = (rs, rowNum) -> new ShoppingCartItem(
             rs.getInt("user_id"),
             rs.getInt("product_id"),
-            rs.getInt("quantity"),
-            rs.getBigDecimal("discount_percent"),
-            rs.getBigDecimal("line_total")
+            rs.getInt("quantity")
     );
 
     @Override
@@ -61,20 +59,19 @@ public class MySqlShoppingCartDao implements ShoppingCartDao
     @Override
     public void addItem(ShoppingCartItem item)
     {
-        String sql = "INSERT INTO shopping_cart (user_id, product_id, quantity, discount_percent, line_total) VALUES (?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, item.getUserId(), item.getProductId(), item.getQuantity(), item.getDiscountPercent(), item.getLineTotal());
+        String sql = "INSERT INTO shopping_cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
+        jdbcTemplate.update(sql, item.getUserId(), item.getProductId(), item.getQuantity());
     }
 
     @Override
     public void updateItem(ShoppingCartItem item)
     {
-        String sql = "UPDATE shopping_cart SET quantity = ?, discount_percent = ?, line_total = ? WHERE user_id = ? AND product_id = ?";
-        jdbcTemplate.update(sql, item.getQuantity(), item.getDiscountPercent(), item.getLineTotal(), item.getUserId(), item.getProductId());
+        String sql = "UPDATE shopping_cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
+        jdbcTemplate.update(sql, item.getQuantity(), item.getUserId(), item.getProductId());
     }
 
     @Override
-    public void clearCart(int userId)
-    {
+    public void clearCart(int userId) {
         String sql = "DELETE FROM shopping_cart WHERE user_id = ?";
         jdbcTemplate.update(sql, userId);
     }

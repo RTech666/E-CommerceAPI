@@ -8,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.yearup.data.ProductDao;
 import org.yearup.data.ShoppingCartDao;
 import org.yearup.data.UserDao;
+import org.yearup.models.Product;
 import org.yearup.models.ShoppingCart;
 import org.yearup.models.ShoppingCartItem;
 import org.yearup.models.User;
@@ -35,9 +36,23 @@ public class ShoppingCartController {
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
-            return shoppingCartDao.getCartByUserId(userId);
-        }
-        catch(Exception e) {
+    
+            ShoppingCart cart = shoppingCartDao.getCartByUserId(userId);
+            if (cart == null) {
+                cart = new ShoppingCart();
+            }
+    
+            for (ShoppingCartItem item : cart.getItems().values()) {
+                if (item.getProduct() == null) {
+                    item.setProduct(productDao.getById(item.getProductId()));
+                    if (item.getProduct() == null) {
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found for item: " + item.getProductId());
+                    }
+                }
+            }
+    
+            return cart;
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.", e);
         }
     }
@@ -49,24 +64,26 @@ public class ShoppingCartController {
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
 
+            Product product = productDao.getById(productId);
+            if (product == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+            }
+
             ShoppingCartItem item = shoppingCartDao.getItemByUserIdAndProductId(userId, productId);
             if (item == null) {
                 item = new ShoppingCartItem();
                 item.setProductId(productId);
                 item.setUserId(userId);
                 item.setQuantity(1);
+                item.setProduct(product);
                 shoppingCartDao.addItem(item);
-            }
-            else
-            {
+            } else {
                 item.setQuantity(item.getQuantity() + 1);
                 shoppingCartDao.updateItem(item);
             }
 
             return new ResponseEntity<>(HttpStatus.CREATED);
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.", e);
         }
     }
@@ -93,19 +110,15 @@ public class ShoppingCartController {
     }
 
     @DeleteMapping("")
-    public ResponseEntity<Void> clearCart(Principal principal)
-    {
-        try
-        {
+    public ResponseEntity<Void> clearCart(Principal principal) {
+        try {
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
-
+    
             shoppingCartDao.clearCart(userId);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.", e);
         }
     }
