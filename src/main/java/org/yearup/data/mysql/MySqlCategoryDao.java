@@ -9,18 +9,13 @@ import java.util.List;
 
 @Repository
 public class MySqlCategoryDao implements CategoryDao {
-
     private final JdbcTemplate jdbcTemplate;
 
     public MySqlCategoryDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    private RowMapper<Category> categoryRowMapper = (rs, rowNum) -> new Category(
-            rs.getInt("category_id"),
-            rs.getString("name"),
-            rs.getString("description")
-    );
+    private RowMapper<Category> categoryRowMapper = (rs, rowNum) -> new Category(rs.getInt("category_id"), rs.getString("name"), rs.getString("description"));
 
     private ResultSetExtractor<Category> categoryExtractor = rs -> rs.next() ? categoryRowMapper.mapRow(rs, 1) : null;
 

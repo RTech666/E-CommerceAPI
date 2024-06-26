@@ -41,7 +41,7 @@ public class CategoriesController {
             }
             return category;
         } catch (ResponseStatusException ex) {
-            throw ex;  // Re-throw the ResponseStatusException
+            throw ex;
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get category", ex);
         }
