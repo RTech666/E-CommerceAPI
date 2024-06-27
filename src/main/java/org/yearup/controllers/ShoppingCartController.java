@@ -66,21 +66,24 @@ public class ShoppingCartController {
 
     @PostMapping("/products/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ShoppingCartItem addProductToCart(@PathVariable int id, Principal principal){
-
-        int userId = getUserId(principal);
-
-        ShoppingCart shoppingCart = shoppingCartDao.getByUserId(userId);
-
-        if (!shoppingCart.contains(id)) {
-            shoppingCartDao.addProduct(userId,id,1);
-            shoppingCart = shoppingCartDao.getByUserId(userId);
-
-        } else {
-            shoppingCartDao.updateProduct(userId, id, shoppingCart.get(id).getQuantity() + 1);
-            shoppingCart = shoppingCartDao.getByUserId(userId);
+    public ResponseEntity<?> addProductToCart(@PathVariable int id, Principal principal){
+        try {
+            int userId = getUserId(principal);
+    
+            ShoppingCart shoppingCart = shoppingCartDao.getByUserId(userId);
+    
+            if (!shoppingCart.contains(id)) {
+                shoppingCartDao.addProduct(userId, id, 1);
+                shoppingCart = shoppingCartDao.getByUserId(userId);
+            } else {
+                shoppingCartDao.updateProduct(userId, id, shoppingCart.get(id).getQuantity() + 1);
+                shoppingCart = shoppingCartDao.getByUserId(userId);
+            }
+    
+            return new ResponseEntity<>(shoppingCart.get(id), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to add product to cart: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return shoppingCart.get(id);
     }
 
     private int getUserId(Principal principal) {

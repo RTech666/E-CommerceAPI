@@ -10,36 +10,60 @@ class ShoppingCartService {
     addToCart(productId)
     {
         const url = `${config.baseUrl}/cart/products/${productId}`;
-        // const headers = userService.getHeaders();
-
-        axios.post(url, {})// ,{headers})
+    
+        axios.post(url, {})
             .then(response => {
-                this.setCart(response.data)
-
-                this.updateCartDisplay()
-
+                console.log("Server response:", response);
+    
+                if (response.data) {
+                    this.setCart(response.data, true);
+                    this.updateCartDisplay();
+                } else {
+                    throw new Error("No data received from server.");
+                }
             })
             .catch(error => {
-
-                const data = {
-                    error: "Add to cart failed."
-                };
-
-                templateBuilder.append("error", data, "errors")
-            })
+                let errorMessage = "Add to cart failed.";
+                if (error.response) {
+                    errorMessage += ` Server responded with status: ${error.response.status}. ${error.response.data}`;
+                } else if (error.request) {
+                    errorMessage += " No response received from server.";
+                } else {
+                    errorMessage += ` Error setting up request: ${error.message}`;
+                }
+                console.error(errorMessage);
+                const data = { error: errorMessage };
+                templateBuilder.append("error", data, "errors");
+            });
     }
 
-    setCart(data)
+    setCart(data, isSingleItem = false)
     {
-        this.cart = {
-            items: [],
-            total: 0
-        }
-
-        this.cart.total = data.total;
-
-        for (const [key, value] of Object.entries(data.items)) {
-            this.cart.items.push(value);
+        if (isSingleItem) {
+            const existingItemIndex = this.cart.items.findIndex(item => item.product.id === data.product.id);
+            if (existingItemIndex !== -1) {
+                this.cart.items[existingItemIndex].quantity += data.quantity;
+                this.cart.items[existingItemIndex].lineTotal += data.lineTotal;
+            } else {
+                this.cart.items.push(data);
+            }
+            this.cart.total += data.lineTotal;
+        } else {
+            this.cart = {
+                items: [],
+                total: 0
+            };
+    
+            if (data && data.items) {
+                this.cart.total = data.total || 0;
+    
+                for (const [key, value] of Object.entries(data.items)) {
+                    this.cart.items.push(value);
+                }
+            } else {
+                console.error("Invalid cart data received:", data);
+                throw new Error("Invalid cart data received from server.");
+            }
         }
     }
 
@@ -143,34 +167,35 @@ class ShoppingCartService {
 
     clearCart()
     {
-
         const url = `${config.baseUrl}/cart`;
-
+    
         axios.delete(url)
              .then(response => {
-                 this.cart = {
-                     items: [],
-                     total: 0
+                 if (response.status === 204) {
+                     this.cart = {
+                         items: [],
+                         total: 0
+                     };
+    
+                     this.updateCartDisplay();
+                     this.loadCartPage();
+                 } else {
+                     throw new Error("Unexpected response status: " + response.status);
                  }
-
-                 this.cart.total = response.data.total;
-
-                 for (const [key, value] of Object.entries(response.data.items)) {
-                     this.cart.items.push(value);
-                 }
-
-                 this.updateCartDisplay()
-                 this.loadCartPage()
-
              })
              .catch(error => {
-
-                 const data = {
-                     error: "Empty cart failed."
-                 };
-
-                 templateBuilder.append("error", data, "errors")
-             })
+                 let errorMessage = "Empty cart failed.";
+                 if (error.response) {
+                     errorMessage += ` Server responded with status: ${error.response.status}. ${error.response.data}`;
+                 } else if (error.request) {
+                     errorMessage += " No response received from server.";
+                 } else {
+                     errorMessage += ` Error setting up request: ${error.message}`;
+                 }
+                 console.error(errorMessage);
+                 const data = { error: errorMessage };
+                 templateBuilder.append("error", data, "errors");
+             });
     }
 
     updateCartDisplay()
