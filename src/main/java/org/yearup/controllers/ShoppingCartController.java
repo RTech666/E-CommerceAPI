@@ -74,11 +74,13 @@ public class ShoppingCartController {
     
             if (!shoppingCart.contains(id)) {
                 shoppingCartDao.addProduct(userId, id, 1);
-                shoppingCart = shoppingCartDao.getByUserId(userId);
             } else {
-                shoppingCartDao.updateProduct(userId, id, shoppingCart.get(id).getQuantity() + 1);
-                shoppingCart = shoppingCartDao.getByUserId(userId);
+                int currentQuantity = shoppingCart.get(id).getQuantity();
+                shoppingCartDao.updateProduct(userId, id, currentQuantity + 1);
             }
+    
+            // Retrieve updated shopping cart after the operation
+            shoppingCart = shoppingCartDao.getByUserId(userId);
     
             return new ResponseEntity<>(shoppingCart.get(id), HttpStatus.OK);
         } catch (Exception e) {

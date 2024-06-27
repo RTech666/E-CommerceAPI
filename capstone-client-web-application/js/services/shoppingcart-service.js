@@ -1,5 +1,3 @@
-let cartService;
-
 class ShoppingCartService {
 
     cart = {
@@ -7,8 +5,7 @@ class ShoppingCartService {
         total:0
     };
 
-    addToCart(productId)
-    {
+    addToCart(productId) {
         const url = `${config.baseUrl}/cart/products/${productId}`;
     
         axios.post(url, {})
@@ -42,8 +39,8 @@ class ShoppingCartService {
         if (isSingleItem) {
             const existingItemIndex = this.cart.items.findIndex(item => item.product.id === data.product.id);
             if (existingItemIndex !== -1) {
-                this.cart.items[existingItemIndex].quantity += data.quantity;
-                this.cart.items[existingItemIndex].lineTotal += data.lineTotal;
+                this.cart.items[existingItemIndex].quantity = data.quantity;
+                this.cart.items[existingItemIndex].lineTotal = data.lineTotal;
             } else {
                 this.cart.items.push(data);
             }
@@ -53,10 +50,10 @@ class ShoppingCartService {
                 items: [],
                 total: 0
             };
-    
+
             if (data && data.items) {
                 this.cart.total = data.total || 0;
-    
+
                 for (const [key, value] of Object.entries(data.items)) {
                     this.cart.items.push(value);
                 }
@@ -67,86 +64,71 @@ class ShoppingCartService {
         }
     }
 
-    loadCart()
-    {
-
+    loadCart() {
         const url = `${config.baseUrl}/cart`;
 
         axios.get(url)
             .then(response => {
-                this.setCart(response.data)
-
-                this.updateCartDisplay()
-
+                this.setCart(response.data);
+                this.updateCartDisplay();
             })
             .catch(error => {
-
-                const data = {
-                    error: "Load cart failed."
-                };
-
-                templateBuilder.append("error", data, "errors")
-            })
-
+                const data = { error: "Load cart failed." };
+                templateBuilder.append("error", data, "errors");
+            });
     }
 
-    loadCartPage()
-    {
-        // templateBuilder.build("cart", this.cart, "main");
-
-        const main = document.getElementById("main")
+    loadCartPage() {
+        const main = document.getElementById("main");
         main.innerHTML = "";
 
         let div = document.createElement("div");
-        div.classList="filter-box";
+        div.classList = "filter-box";
         main.appendChild(div);
 
-        const contentDiv = document.createElement("div")
+        const contentDiv = document.createElement("div");
         contentDiv.id = "content";
         contentDiv.classList.add("content-form");
 
-        const cartHeader = document.createElement("div")
-        cartHeader.classList.add("cart-header")
+        const cartHeader = document.createElement("div");
+        cartHeader.classList.add("cart-header");
 
-        const h1 = document.createElement("h1")
+        const h1 = document.createElement("h1");
         h1.innerText = "Cart";
         cartHeader.appendChild(h1);
 
         const button = document.createElement("button");
-        button.classList.add("btn")
-        button.classList.add("btn-danger")
+        button.classList.add("btn", "btn-danger");
         button.innerText = "Clear";
         button.addEventListener("click", () => this.clearCart());
-        cartHeader.appendChild(button)
+        cartHeader.appendChild(button);
 
-        contentDiv.appendChild(cartHeader)
+        contentDiv.appendChild(cartHeader);
         main.appendChild(contentDiv);
 
-        // let parent = document.getElementById("cart-item-list");
         this.cart.items.forEach(item => {
-            this.buildItem(item, contentDiv)
+            this.buildItem(item, contentDiv);
         });
     }
 
-    buildItem(item, parent)
-    {
+    buildItem(item, parent) {
         let outerDiv = document.createElement("div");
         outerDiv.classList.add("cart-item");
 
         let div = document.createElement("div");
         outerDiv.appendChild(div);
-        let h4 = document.createElement("h4")
+        let h4 = document.createElement("h4");
         h4.innerText = item.product.name;
         div.appendChild(h4);
 
         let photoDiv = document.createElement("div");
-        photoDiv.classList.add("photo")
+        photoDiv.classList.add("photo");
         let img = document.createElement("img");
-        img.src = `/images/products/${item.product.imageUrl}`
+        img.src = `/images/products/${item.product.imageUrl}`;
         img.addEventListener("click", () => {
-            showImageDetailForm(item.product.name, img.src)
-        })
-        photoDiv.appendChild(img)
+            showImageDetailForm(item.product.name, img.src);
+        });
+        photoDiv.appendChild(img);
         let priceH4 = document.createElement("h4");
         priceH4.classList.add("price");
         priceH4.innerText = `$${item.product.price}`;
@@ -157,16 +139,14 @@ class ShoppingCartService {
         descriptionDiv.innerText = item.product.description;
         outerDiv.appendChild(descriptionDiv);
 
-        let quantityDiv = document.createElement("div")
+        let quantityDiv = document.createElement("div");
         quantityDiv.innerText = `Quantity: ${item.quantity}`;
-        outerDiv.appendChild(quantityDiv)
-
+        outerDiv.appendChild(quantityDiv);
 
         parent.appendChild(outerDiv);
     }
 
-    clearCart()
-    {
+    clearCart() {
         const url = `${config.baseUrl}/cart`;
     
         axios.delete(url)
@@ -200,26 +180,20 @@ class ShoppingCartService {
 
     updateCartDisplay() {
         try {
-          const cartControl = document.getElementById("cart-items");
-          const itemCount = this.cart.items.reduce((acc, item) => acc + item.quantity, 0);
-  
-          cartControl.innerText = itemCount;
+            const cartControl = document.getElementById("cart-items");
+            const itemCount = this.cart.items.reduce((acc, item) => acc + item.quantity, 0);
+
+            cartControl.innerText = itemCount;
         } catch (e) {
-          console.error(e);
+            console.error(e);
         }
     }
 }
 
-
-
-
-
 document.addEventListener('DOMContentLoaded', () => {
     cartService = new ShoppingCartService();
 
-    if(userService.isLoggedIn())
-    {
+    if(userService.isLoggedIn()) {
         cartService.loadCart();
     }
-
 });
