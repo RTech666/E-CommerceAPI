@@ -198,16 +198,14 @@ class ShoppingCartService {
              });
     }
 
-    updateCartDisplay()
-    {
+    updateCartDisplay() {
         try {
-            const itemCount = this.cart.items.length;
-            const cartControl = document.getElementById("cart-items")
-
-            cartControl.innerText = itemCount;
-        }
-        catch (e) {
-
+          const cartControl = document.getElementById("cart-items");
+          const itemCount = this.cart.items.reduce((acc, item) => acc + item.quantity, 0);
+  
+          cartControl.innerText = itemCount;
+        } catch (e) {
+          console.error(e);
         }
     }
 }
