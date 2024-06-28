@@ -1,5 +1,3 @@
-let templateBuilder = {};
-
 class TemplateBuilder
 {
     build(templateName, value, target, callback)
