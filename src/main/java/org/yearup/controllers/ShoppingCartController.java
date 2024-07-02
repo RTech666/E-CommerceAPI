@@ -8,13 +8,10 @@ import org.springframework.web.server.ResponseStatusException;
 import org.yearup.data.ProductDao;
 import org.yearup.data.ShoppingCartDao;
 import org.yearup.data.UserDao;
-import org.yearup.models.Product;
 import org.yearup.models.ShoppingCart;
 import org.yearup.models.ShoppingCartItem;
 import org.yearup.models.User;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/cart")
@@ -79,7 +76,6 @@ public class ShoppingCartController {
                 shoppingCartDao.updateProduct(userId, id, currentQuantity + 1);
             }
     
-            // Retrieve updated shopping cart after the operation
             shoppingCart = shoppingCartDao.getByUserId(userId);
     
             return new ResponseEntity<>(shoppingCart.get(id), HttpStatus.OK);
